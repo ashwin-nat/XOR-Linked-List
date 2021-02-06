@@ -1,5 +1,5 @@
 CFLAGS= -O0 -ggdb3 -Wall
-BIN=xor-ll.elf
+BIN=xor-ll
 SRCS=xor-ll.c main.c
 
 all: build
