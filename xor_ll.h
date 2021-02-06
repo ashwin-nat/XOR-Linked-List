@@ -1,11 +1,111 @@
+/**
+ * @file            xor_ll.h
+ * @author          Ashwin Natarajan
+ * @brief           The header file for the XOR linked list library. This 
+ *                  should be added to the include directory of your project
+ * @copyright       Copyright (c) 2021
+ * 
+ */
 #ifndef __XOR_LL_H__
 #define __XOR_LL_H__
 
+#include <stdint.h>
+#include <stddef.h>
+
+/******************************************************************************/
+/* Macro definitions */
+#define XOR_LL_STATUS_SUCCESS            0
+#define XOR_LL_STATUS_FAILURE_GEN       -1
+#define XOR_LL_STATUS_FAILURE_ALLOC     -2
+#define XOR_LL_STATUS_BAD_OPT           -3
+#define XOR_LL_STATUS_BAD_DATA          -4
+#define XOR_LL_STATUS_NULL_XOR_LL       -5
+#define XOR_LL_STATUS_EOL               -6
+
+#define XOR_LL_INITIALISER              {   .head = NULL, \
+                                            .tail = NULL, \
+                                            .iterator_prev = NULL, \
+                                            .iterator_curr = NULL, }
+#define XOR_LL_ITERATOR_INITIALISER     {   .data_ptr = NULL, .size = 0}
+
+#define XOR_LL_DONT_ALLOC               0
+#define XOR_LL_ALLOC_COPY_ONTO_HEAP     1
+
+#define XOR_LL_LOOP_FWD(my_ll_ptr)               for(;;)
+/******************************************************************************/
+/* Strucure definitions */
+/**
+ * @brief           The opaque data structure used to represent a node.
+ *                  Just the forward declaration here
+ */
 struct _xor_ll_node;
 
+/**
+ * @brief           The structure for the XOR linked list handle
+ */
 typedef struct _xor_ll {
     struct _xor_ll_node *head;
     struct _xor_ll_node *tail;
+
+    struct _xor_ll_node *iterator_prev;
+    struct _xor_ll_node *iterator_curr;
 }XOR_LL;
+
+typedef struct _xor_ll_iterator {
+    void *data_ptr;
+    size_t size;
+}XOR_LL_ITERATOR;
+
+/******************************************************************************/
+/* Function declarations */
+/**
+ * @brief           Initialise the XOR Linked list object's fields
+ * @param ll_ptr    Pointer to the XOR linked list object
+ * @return int      XOR_LL_STATUS_SUCCESS on success (will never fail)
+ *                  XOR_LL_STATUS_NULL_XOR_LL if ll_ptr is NULL
+ */
+int
+xor_ll_init (
+    XOR_LL *ll_ptr);
+
+/**
+ * @brief           Insert the specified data into the XOR linked list
+ * @param ll_ptr    Pointer to the XOR Linked list object
+ * @param data      Const pointer to the data
+ * @param size      Size of the data
+ * @return int      XOR_LL_STATUS_SUCCESS - insertion successful
+ *                  XOR_LL_STATUS_FAILURE_ALLOC - allocation failure (
+ *                      if copy_mode is XOR_LL_ALLOC_COPY_ONTO_HEAP)
+ *                  XOR_LL_STATUS_BAD_DATA - data is NULL or size is 0
+ */
+int
+xor_ll_insert (
+    XOR_LL *ll_ptr, 
+    const void *data, 
+    size_t size);
+
+/**
+ * @brief           Iterates over the given XOR Linked list in the forward 
+ *                      direction, sets data_ptr to point to the required data, 
+ *                      and fills the memory pointed to size_ptr (if not NULL) 
+ *                      with the data size
+ * @param ll_ptr    Pointer to the XOR linked list object
+ * @param itr_ptr   Pointer to the XOR LL iterator where the data 
+ *                      pointer and size will be updated
+ * @return int      XOR_LL_STATUS_SUCCESS - next node found
+ *                  XOR_LL_STATUS_EOL - the end of the list is reached
+ */
+int
+xor_ll_iterate_fwd (
+    XOR_LL *ll_ptr,
+    XOR_LL_ITERATOR *iterator_ptr);
+
+/**
+ * @brief           End the ongoing iteration prematurely
+ * @param ll_ptr    Pointer to the XOR Linked list object
+ */
+void
+xor_ll_end_iteration (
+    XOR_LL *ll_ptr);
 
 #endif  //__XOR_LL_H__
