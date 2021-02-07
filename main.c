@@ -2,6 +2,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+int comparator (const void *a, size_t a_sz, const void *b, size_t b_sz)
+{
+    if (a_sz == b_sz) {
+        const int *a_int = a;
+        const int *b_int = b;
+        if (*a_int == *b_int) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 int main (int argc, char *argv[])
 {
     printf ("Hello world\n");
@@ -26,11 +38,13 @@ int main (int argc, char *argv[])
 
     XOR_LL_ITERATOR itr = XOR_LL_ITERATOR_INITIALISER;
     printf ("Forward: ");
-    XOR_LL_LOOP_FWD(&my_ll,&itr) {
+    XOR_LL_LOOP_FWD_RST(&my_ll,&itr) {
         int *ptr = itr.data_ptr;
         printf ("%d  ", *ptr);
         fflush(stdout);
     }
+
+    xor_ll_remove_node (&my_ll, &y, sizeof(z), comparator);
 
     printf ("\nReverse: ");
     XOR_LL_LOOP_REV_RST(&my_ll,&itr) {

@@ -53,15 +53,11 @@ _xor_ll_get_next_node (
  * @brief           Initialise the XOR Linked list object's fields
  * @param ll_ptr    Pointer to the XOR linked list object
  * @return int      XOR_LL_STATUS_SUCCESS on success
- *                  XOR_LL_STATUS_NULL_XOR_LL if ll_ptr is NULL
  */
 int
 xor_ll_init (
     XOR_LL *ll_ptr)
 {
-    if (NULL == ll_ptr) {
-        return XOR_LL_STATUS_NULL_XOR_LL;
-    }
     ll_ptr->head = NULL;
     ll_ptr->tail = NULL;
     return XOR_LL_STATUS_SUCCESS;
@@ -140,6 +136,7 @@ xor_ll_iterate_fwd (
         return XOR_LL_STATUS_EOL;
     }
 
+    itr_ptr->forward_dir = __XOR_LL_TRUE;
     //get the next pointer
     if (NULL == itr_ptr->iterator_curr) {
         assert (NULL == itr_ptr->iterator_prev);
@@ -150,8 +147,9 @@ xor_ll_iterate_fwd (
         //proceed with the current traversal, find the next node
         //next node is prev XOR'd with xor_ptr
         struct _xor_ll_node *curr_node = itr_ptr->iterator_curr;
-        itr_ptr->iterator_curr = _xor_ll_get_next_node (itr_ptr->iterator_prev, 
-                                            itr_ptr->iterator_curr->xor_ptr);
+        itr_ptr->iterator_curr = _xor_ll_get_next_node (
+                                    itr_ptr->iterator_prev, 
+                                    itr_ptr->iterator_curr->xor_ptr);
         itr_ptr->iterator_prev = curr_node;
     }
 
@@ -192,6 +190,7 @@ xor_ll_iterate_rev (
         return XOR_LL_STATUS_EOL;
     }
 
+    itr_ptr->forward_dir = __XOR_LL_FALSE;
     //get the next pointer
     if (NULL == itr_ptr->iterator_curr) {
         assert (NULL == itr_ptr->iterator_prev);
@@ -226,13 +225,96 @@ xor_ll_iterate_rev (
  * @param itr_ptr   Pointer to the XOR Linked list iterator object
  */
 void
-xor_ll_reset_iteration (
+xor_ll_reset_iterator (
     XOR_LL_ITERATOR *itr_ptr)
 {
     itr_ptr->data_ptr       = NULL;
     itr_ptr->size           = 0;
     itr_ptr->iterator_curr  = NULL;
     itr_ptr->iterator_prev  = NULL;
+}
+
+/**
+ * @brief           Search for the given search key in the given linked list and
+ *                      remove it
+ * @param ll_ptr    Pointer to the XOR Linked List object
+ * @param key       Const void pointer to the search key data
+ * @param size      Size of the search key
+ * @param cmp       Comparator function that returns 0 when the search key is 
+ *                      found, and non-zero otherwise
+ * @return int      XOR_LL_STATUS_SUCCESS removal successful
+ *                  XOR_LL_STATUS_NOT_FOUND key not found
+ */
+int
+xor_ll_remove_node (
+    XOR_LL *ll_ptr,
+    const void *key,
+    size_t size,
+    int (*cmp) (const void *a, size_t a_sz, const void *b, size_t b_sz))
+{
+    assert (ll_ptr);
+    assert (key);
+    assert (size);
+
+    //iterate through the linked list, and free all the memory allocated
+    struct _xor_ll_node *curr = ll_ptr->head, *prev = NULL;
+    while (curr) {
+        //apply the comparator function for all items
+        if (cmp(curr->data, curr->size, key, size) == 0) {
+            //found the key;
+            if (curr == ll_ptr->head && curr == ll_ptr->tail) {
+                //only one item in the list, we're removing it
+                ll_ptr->head = NULL;
+                ll_ptr->tail = NULL;
+            }
+            else if (curr == ll_ptr->head) {
+                //delete the head node
+                //find the 3rd node in the list
+                struct _xor_ll_node *next = (struct _xor_ll_node*) 
+                                            (ll_ptr->head->xor_ptr);
+                struct _xor_ll_node *next_next = _xor_ll_get_next_node (
+                                            curr, next->xor_ptr);
+                //shift the head one step right
+                ll_ptr->head = next;
+                next->xor_ptr = (uintptr_t) (next_next);
+            }
+            else if (curr == ll_ptr->tail) {
+                //delete the tail node
+                //find the 3rd last node in the list
+                //(we know prev is tail->xor_ptr)
+                struct _xor_ll_node *prev_prev = _xor_ll_get_next_node
+                                            (curr, prev->xor_ptr);
+                //shift the tail one step left
+                ll_ptr->tail = prev;
+                prev->xor_ptr = (uintptr_t) (prev_prev);
+            }
+            else {
+                //the node is somewhere in between
+                //update the xor_ptr of prev and next so that curr gets unlinked
+                struct _xor_ll_node *next = _xor_ll_get_next_node (prev, 
+                                                curr->xor_ptr);
+                struct _xor_ll_node *prev_prev = _xor_ll_get_next_node (curr, 
+                                                prev->xor_ptr);
+                struct _xor_ll_node *next_next = _xor_ll_get_next_node (curr, 
+                                                next->xor_ptr);
+                //set the new xor_ptr for prev and next
+                prev->xor_ptr = (uintptr_t)(prev_prev) ^ (uintptr_t)(next);
+                next->xor_ptr = (uintptr_t)(prev) ^ (uintptr_t)(next_next);
+            }
+
+
+            free (curr->data);
+            free (curr);
+
+            return XOR_LL_STATUS_SUCCESS;
+        }
+
+        //update the next and prev pointers
+        struct _xor_ll_node *temp = curr;
+        curr = _xor_ll_get_next_node (prev, curr->xor_ptr);
+        prev = temp;
+    }
+    return XOR_LL_STATUS_NOT_FOUND;
 }
 
 /**

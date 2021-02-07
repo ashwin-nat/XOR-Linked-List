@@ -17,16 +17,16 @@
 #define XOR_LL_STATUS_SUCCESS            0
 #define XOR_LL_STATUS_FAILURE_GEN       -1
 #define XOR_LL_STATUS_FAILURE_ALLOC     -2
-#define XOR_LL_STATUS_BAD_OPT           -3
-#define XOR_LL_STATUS_BAD_DATA          -4
-#define XOR_LL_STATUS_NULL_XOR_LL       -5
-#define XOR_LL_STATUS_EOL               -6
+#define XOR_LL_STATUS_BAD_DATA          -3
+#define XOR_LL_STATUS_EOL               -4
+#define XOR_LL_STATUS_NOT_FOUND         -5
 
 #define XOR_LL_INITIALISER              {   .head = NULL, \
                                             .tail = NULL,}
 #define XOR_LL_ITERATOR_INITIALISER     {   .data_ptr = NULL, .size = 0, \
                                             .iterator_prev = NULL, \
-                                            .iterator_curr = NULL,}
+                                            .iterator_curr = NULL, \
+                                            .forward_dir = 0,}
 
 #define XOR_LL_DONT_ALLOC               0
 #define XOR_LL_ALLOC_COPY_ONTO_HEAP     1
@@ -35,7 +35,7 @@
                             while(XOR_LL_STATUS_EOL != \
                             xor_ll_iterate_fwd((ll_ptr),(ll_itr_ptr)))
 #define XOR_LL_LOOP_FWD_RST(ll_ptr,ll_itr_ptr) \
-                            xor_ll_reset_iteration((ll_itr_ptr)); \
+                            xor_ll_reset_iterator((ll_itr_ptr)); \
                             while(XOR_LL_STATUS_EOL != \
                             xor_ll_iterate_fwd((ll_ptr),(ll_itr_ptr)))
 
@@ -43,7 +43,7 @@
                             while(XOR_LL_STATUS_EOL != \
                             xor_ll_iterate_rev((ll_ptr),(ll_itr_ptr)))
 #define XOR_LL_LOOP_REV_RST(ll_ptr,ll_itr_ptr) \
-                            xor_ll_reset_iteration((ll_itr_ptr)); \
+                            xor_ll_reset_iterator((ll_itr_ptr)); \
                             while(XOR_LL_STATUS_EOL != \
                             xor_ll_iterate_rev((ll_ptr),(ll_itr_ptr)))
 /******************************************************************************/
@@ -68,6 +68,8 @@ typedef struct _xor_ll_iterator {
 
     struct _xor_ll_node *iterator_prev;
     struct _xor_ll_node *iterator_curr;
+
+    uint8_t forward_dir;
 }XOR_LL_ITERATOR;
 
 /******************************************************************************/
@@ -76,7 +78,6 @@ typedef struct _xor_ll_iterator {
  * @brief           Initialise the XOR Linked list object's fields
  * @param ll_ptr    Pointer to the XOR linked list object
  * @return int      XOR_LL_STATUS_SUCCESS on success (will never fail)
- *                  XOR_LL_STATUS_NULL_XOR_LL if ll_ptr is NULL
  */
 int
 xor_ll_init (
@@ -135,13 +136,31 @@ xor_ll_iterate_rev (
  * @param itr_ptr   Pointer to the XOR Linked list iterator object
  */
 void
-xor_ll_reset_iteration (
+xor_ll_reset_iterator (
     XOR_LL_ITERATOR *itr_ptr);
+
+/**
+ * @brief           Search for the given search key in the given linked list and
+ *                      remove it
+ * @param ll_ptr    Pointer to the XOR Linked List object
+ * @param key       Const void pointer to the search key data
+ * @param size      Size of the search key
+ * @param cmp       Comparator function that returns 0 when the search key is 
+ *                      found, and non-zero otherwise
+ * @return int      XOR_LL_STATUS_SUCCESS removal successful
+ *                  XOR_LL_STATUS_NOT_FOUND key not found
+ */
+int
+xor_ll_remove_node (
+    XOR_LL *ll_ptr,
+    const void *key,
+    size_t size,
+    int (*cmp) (const void *a, size_t a_sz, const void *b, size_t b_sz));
 
 /**
  * @brief           Destroy this XOR Linked list
  * @param ll_ptr    Pointer to the XOR Linked list object
- * @return int 
+ * @return int      XOR_LL_STATUS_SUCCESS Linked list destroyed successfully
  */
 int
 xor_ll_destroy (
