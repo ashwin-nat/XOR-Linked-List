@@ -23,15 +23,29 @@
 #define XOR_LL_STATUS_EOL               -6
 
 #define XOR_LL_INITIALISER              {   .head = NULL, \
-                                            .tail = NULL, \
+                                            .tail = NULL,}
+#define XOR_LL_ITERATOR_INITIALISER     {   .data_ptr = NULL, .size = 0, \
                                             .iterator_prev = NULL, \
-                                            .iterator_curr = NULL, }
-#define XOR_LL_ITERATOR_INITIALISER     {   .data_ptr = NULL, .size = 0}
+                                            .iterator_curr = NULL,}
 
 #define XOR_LL_DONT_ALLOC               0
 #define XOR_LL_ALLOC_COPY_ONTO_HEAP     1
 
-#define XOR_LL_LOOP_FWD(my_ll_ptr)               for(;;)
+#define XOR_LL_LOOP_FWD(ll_ptr,ll_itr_ptr) \
+                            while(XOR_LL_STATUS_EOL != \
+                            xor_ll_iterate_fwd((ll_ptr),(ll_itr_ptr)))
+#define XOR_LL_LOOP_FWD_RST(ll_ptr,ll_itr_ptr) \
+                            xor_ll_reset_iteration((ll_itr_ptr)); \
+                            while(XOR_LL_STATUS_EOL != \
+                            xor_ll_iterate_fwd((ll_ptr),(ll_itr_ptr)))
+
+#define XOR_LL_LOOP_REV(ll_ptr,ll_itr_ptr) \
+                            while(XOR_LL_STATUS_EOL != \
+                            xor_ll_iterate_rev((ll_ptr),(ll_itr_ptr)))
+#define XOR_LL_LOOP_REV_RST(ll_ptr,ll_itr_ptr) \
+                            xor_ll_reset_iteration((ll_itr_ptr)); \
+                            while(XOR_LL_STATUS_EOL != \
+                            xor_ll_iterate_rev((ll_ptr),(ll_itr_ptr)))
 /******************************************************************************/
 /* Strucure definitions */
 /**
@@ -46,14 +60,14 @@ struct _xor_ll_node;
 typedef struct _xor_ll {
     struct _xor_ll_node *head;
     struct _xor_ll_node *tail;
-
-    struct _xor_ll_node *iterator_prev;
-    struct _xor_ll_node *iterator_curr;
 }XOR_LL;
 
 typedef struct _xor_ll_iterator {
     void *data_ptr;
     size_t size;
+
+    struct _xor_ll_node *iterator_prev;
+    struct _xor_ll_node *iterator_curr;
 }XOR_LL_ITERATOR;
 
 /******************************************************************************/
@@ -98,14 +112,39 @@ xor_ll_insert (
 int
 xor_ll_iterate_fwd (
     XOR_LL *ll_ptr,
-    XOR_LL_ITERATOR *iterator_ptr);
+    XOR_LL_ITERATOR *itr_ptr);
 
 /**
- * @brief           End the ongoing iteration prematurely
- * @param ll_ptr    Pointer to the XOR Linked list object
+ * @brief           Iterates over the given XOR Linked list in the reverse 
+ *                      direction, sets data_ptr to point to the required data, 
+ *                      and fills the memory pointed to size_ptr (if not NULL) 
+ *                      with the data size
+ * @param ll_ptr    Pointer to the XOR linked list object
+ * @param itr_ptr   Pointer to the XOR LL iterator where the data 
+ *                      pointer and size will be updated
+ * @return int      XOR_LL_STATUS_SUCCESS - next node found
+ *                  XOR_LL_STATUS_EOL - the end of the list is reached
+ */
+int
+xor_ll_iterate_rev (
+    XOR_LL *ll_ptr,
+    XOR_LL_ITERATOR *itr_ptr);
+
+/**
+ * @brief           End/Reset the ongoing iteration prematurely
+ * @param itr_ptr   Pointer to the XOR Linked list iterator object
  */
 void
-xor_ll_end_iteration (
+xor_ll_reset_iteration (
+    XOR_LL_ITERATOR *itr_ptr);
+
+/**
+ * @brief           Destroy this XOR Linked list
+ * @param ll_ptr    Pointer to the XOR Linked list object
+ * @return int 
+ */
+int
+xor_ll_destroy (
     XOR_LL *ll_ptr);
 
 #endif  //__XOR_LL_H__

@@ -25,11 +25,21 @@ int main (int argc, char *argv[])
 #endif
 
     XOR_LL_ITERATOR itr = XOR_LL_ITERATOR_INITIALISER;
-    while (xor_ll_iterate_fwd(&my_ll, &itr) == XOR_LL_STATUS_SUCCESS){
+    printf ("Forward: ");
+    XOR_LL_LOOP_FWD(&my_ll,&itr) {
         int *ptr = itr.data_ptr;
-        printf ("%d\n", *ptr);
+        printf ("%d  ", *ptr);
+        fflush(stdout);
     }
 
+    printf ("\nReverse: ");
+    XOR_LL_LOOP_REV_RST(&my_ll,&itr) {
+        int *ptr = itr.data_ptr;
+        printf ("%d  ", *ptr);
+    }
+
+    printf ("\n");
     free (x);
+    xor_ll_destroy (&my_ll);
     return 0;
 }
