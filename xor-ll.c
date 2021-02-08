@@ -108,7 +108,6 @@ xor_ll_insert (
 
         //3. update the tail pointer
         ll_ptr->tail = node;
-        
     }
     return XOR_LL_STATUS_SUCCESS;
 }
@@ -235,6 +234,84 @@ xor_ll_reset_iterator (
 }
 
 /**
+ * @brief           Remove the node specified by the iterator from the linked 
+ *                  list
+ * @param ll_ptr    Pointer to the XOR linked list object
+ * @param iter_ptr  Pointer to the iterator describing the position
+ * @return int      XOR_LL_STATUS_SUCCESS removal successful
+ */
+int
+xor_ll_remove_node_iter (
+    XOR_LL *ll_ptr,
+    XOR_LL_ITERATOR *iter_ptr)
+{
+    struct _xor_ll_node *del_ptr = NULL;
+
+    //case 0: list is empty
+    if (ll_ptr->head == NULL) {
+        assert (ll_ptr->tail == NULL);
+        assert (iter_ptr->iterator_curr == NULL);
+        assert (iter_ptr->iterator_prev == NULL);
+
+        return XOR_LL_STATUS_EMPTY_LIST;
+    }
+
+    //case 1: list has only one node
+    if(iter_ptr->iterator_curr == ll_ptr->head && ll_ptr->head == ll_ptr->tail){
+        assert (iter_ptr->iterator_prev == NULL);
+        del_ptr = iter_ptr->iterator_curr;
+
+        iter_ptr->iterator_curr = NULL;
+        ll_ptr->head = NULL;
+        ll_ptr->tail = NULL;
+    }
+
+    //case 2: node is head, update head
+    else if (iter_ptr->iterator_curr == ll_ptr->head) {
+        // struct _xor_ll_node *next = _xor_ll_get_next_node (NULL, 
+        //                                     iter_ptr->iterator_curr->xor_ptr);
+
+    }
+
+    //case 3: node is tail, update tail
+    else if (iter_ptr->iterator_prev == ll_ptr->tail) {
+
+    }
+
+    //case 4: node is some in between
+    else {
+        struct _xor_ll_node *next = _xor_ll_get_next_node (NULL, 
+                                            iter_ptr->iterator_curr->xor_ptr);
+
+        //update previous's link: from prev->prev to next
+        //prev->xor_ptr = &(prev->prev) XOR &(next)
+        struct _xor_ll_node *prev_prev = _xor_ll_get_next_node (
+                                        iter_ptr->iterator_prev, 
+                                            iter_ptr->iterator_prev->xor_ptr);
+        iter_ptr->iterator_prev->xor_ptr = (uintptr_t)(prev_prev) ^ 
+                                                (uintptr_t)(next);
+
+        //update next's link (opp. direction): from next->next to prev
+        //next->xor_ptr = &(next->next) XOR &(prev)
+        struct _xor_ll_node *next_next = _xor_ll_get_next_node (next, 
+                                            next->xor_ptr);
+        next->xor_ptr = (uintptr_t)(next_next) ^ 
+                            (uintptr_t)(iter_ptr->iterator_prev);
+        
+
+    }
+
+    //cleanup section
+    if (del_ptr) {
+#ifndef XOR_LL_NO_ALLOC
+        free (del_ptr->data);
+#endif
+        free (del_ptr);
+    }
+    return XOR_LL_STATUS_SUCCESS;
+}
+
+/**
  * @brief           Search for the given search key in the given linked list and
  *                      remove it
  * @param ll_ptr    Pointer to the XOR Linked List object
@@ -302,8 +379,9 @@ xor_ll_remove_node (
                 next->xor_ptr = (uintptr_t)(prev) ^ (uintptr_t)(next_next);
             }
 
-
+#ifndef XOR_LL_NO_ALLOC
             free (curr->data);
+#endif
             free (curr);
 
             return XOR_LL_STATUS_SUCCESS;
@@ -336,7 +414,9 @@ xor_ll_destroy (
         prev = temp;
 
         //free prev and it's data
+#ifndef XOR_LL_NO_ALLOC
         free (prev->data);
+#endif
         free (prev);
     }
 
@@ -365,6 +445,10 @@ _xor_ll_create_node (
     struct _xor_ll_node *ret = malloc (sizeof(*ret));
     if (ret) {
         //allocate memory for the data
+#ifdef XOR_LL_NO_ALLOC
+        ret->data = data;
+        ret->size = size;
+#else
         ret->data = malloc (size);
         if (ret->data) {
             //if data allocation is successful, copy the data;
@@ -377,6 +461,7 @@ _xor_ll_create_node (
             free (ret);
             ret = NULL;
         }
+#endif
     }
     return ret;
 }

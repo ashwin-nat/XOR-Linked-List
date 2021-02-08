@@ -20,6 +20,7 @@
 #define XOR_LL_STATUS_BAD_DATA          -3
 #define XOR_LL_STATUS_EOL               -4
 #define XOR_LL_STATUS_NOT_FOUND         -5
+#define XOR_LL_STATUS_EMPTY_LIST        -6
 
 #define XOR_LL_INITIALISER              {   .head = NULL, \
                                             .tail = NULL,}
@@ -139,6 +140,18 @@ void
 xor_ll_reset_iterator (
     XOR_LL_ITERATOR *itr_ptr);
 
+/**
+ * @brief           Remove the node specified by the iterator from the linked 
+ *                  list
+ * @param ll_ptr    Pointer to the XOR linked list object
+ * @param iter_ptr  Pointer to the iterator describing the position
+ * @return int      XOR_LL_STATUS_SUCCESS - removal successful
+ *                  XOR_LL_STATUS_EMPTY_LIST - empty list
+ */
+int
+xor_ll_remove_node_iter (
+    XOR_LL *ll_ptr,
+    XOR_LL_ITERATOR *iter_ptr);
 /**
  * @brief           Search for the given search key in the given linked list and
  *                      remove it

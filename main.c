@@ -20,6 +20,7 @@ int main (int argc, char *argv[])
 
     int y=2, z=3;
     int *x = malloc (sizeof(*x));
+    int a=10, b=20, c=30;
     *x = 1;
     XOR_LL my_ll = XOR_LL_INITIALISER;
     xor_ll_init (&my_ll);
@@ -27,6 +28,9 @@ int main (int argc, char *argv[])
     xor_ll_insert (&my_ll, x, sizeof(*x));
     xor_ll_insert (&my_ll, &y, sizeof(y));
     xor_ll_insert (&my_ll, &z, sizeof(z));
+    xor_ll_insert (&my_ll, &a, sizeof(a));
+    xor_ll_insert (&my_ll, &b, sizeof(b));
+    xor_ll_insert (&my_ll, &c, sizeof(c));
 #if 0
 
     XOR_LL_LOOP (&my_ll) {
