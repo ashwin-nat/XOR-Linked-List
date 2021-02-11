@@ -39,4 +39,26 @@ An XOR-Linked list is a data structure that gets the best of the above worlds.
 It is a linked list that can be traversed in either direction, but only needs 
 one "pointer". 
 
-This is achieved by using the magic of XOR.
+This is achieved by using the magical property of XOR.
+```
+if:
+    A XOR B = C
+then
+    A XOR C = B
+    B XOR C = A
+```
+
+So at every node, we will store the XOR of the previous and current node.
+```
+    xor_ptr = &(PREV) XOR &(NEXT)
+```
+So while traversing, all we need to do is perform
+```
+
+    next = &(PREV) XOR (CURR->xor_ptr)
+```
+
+## Usage:
+Just include the xor-ll.c in your sources directory and xor-ll.h in your includes
+directory.
+Use GNU make to build the same application.

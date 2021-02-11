@@ -1,6 +1,6 @@
 CFLAGS= -O0 -ggdb3 -Wall -fsanitize=address
 BIN=xor-ll
-SRCS=xor-ll.c main.c
+SRCS=xor-ll.c example.c
 
 all: build
 
