@@ -27,7 +27,8 @@
 #define XOR_LL_ITERATOR_INITIALISER     {   .data_ptr = NULL, .size = 0, \
                                             .iterator_prev = NULL, \
                                             .iterator_curr = NULL, \
-                                            .forward_dir = 0,}
+                                            .forward_dir = 1, \
+                                            .just_deleted = 0,}
 
 #define XOR_LL_DONT_ALLOC               0
 #define XOR_LL_ALLOC_COPY_ONTO_HEAP     1
@@ -71,6 +72,7 @@ typedef struct _xor_ll_iterator {
     struct _xor_ll_node *iterator_curr;
 
     uint8_t forward_dir;
+    uint8_t just_deleted;
 }XOR_LL_ITERATOR;
 
 /******************************************************************************/

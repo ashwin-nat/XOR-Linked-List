@@ -12,6 +12,7 @@
 //evaluates to 1 if valid, 0 if invalid
 #define __XOR_LL_CP_MODE_VALID(x)   ((XOR_LL_DONT_ALLOC==(x)) || \
                                      (XOR_LL_ALLOC_COPY_ONTO_HEAP==(x)))
+#define __XOR_LL_COMPUTE_LINK(a,b)  (((uintptr_t)(a)) ^ ((uintptr_t)(b)))
 /******************************************************************************/
 /* Internal structure definitions */
 /**
@@ -101,7 +102,9 @@ xor_ll_insert (
     else {
         //insert from the tail side
         //1. update xor_ptr to prev (current tail ptr) XOR'd with new (next)node
-        ll_ptr->tail->xor_ptr ^= (uintptr_t)(node);
+        // ll_ptr->tail->xor_ptr ^= (uintptr_t)(node);
+        ll_ptr->tail->xor_ptr = __XOR_LL_COMPUTE_LINK(ll_ptr->tail->xor_ptr,
+                                    node);
 
         //2. update the xor_ptr of the new node
         node->xor_ptr = (uintptr_t) (ll_ptr->tail);
@@ -133,6 +136,22 @@ xor_ll_iterate_fwd (
     if (NULL == ll_ptr->head) {
         assert (NULL == ll_ptr->tail);
         return XOR_LL_STATUS_EOL;
+    }
+
+    //just deleted - update data ptr
+    if (__XOR_LL_TRUE == itr_ptr->just_deleted) {
+        //if itr_ptr->iterator_curr is NULL, we have reached the end of the list
+        itr_ptr->just_deleted = __XOR_LL_FALSE;
+        if (itr_ptr->iterator_curr) {
+            itr_ptr->data_ptr = itr_ptr->iterator_curr->data;
+            itr_ptr->size = itr_ptr->iterator_curr->size;
+        }
+        else {
+            itr_ptr->data_ptr = NULL;
+            itr_ptr->size = 0;
+        }
+        return (itr_ptr->iterator_curr) ? (XOR_LL_STATUS_SUCCESS) : 
+            (XOR_LL_STATUS_EOL);
     }
 
     itr_ptr->forward_dir = __XOR_LL_TRUE;
@@ -189,6 +208,22 @@ xor_ll_iterate_rev (
         return XOR_LL_STATUS_EOL;
     }
 
+    //just deleted
+    if (__XOR_LL_TRUE == itr_ptr->just_deleted) {
+        itr_ptr->just_deleted = __XOR_LL_FALSE;
+        //if itr_ptr->iterator_curr is NULL, we have reached the end of the list
+        if (itr_ptr->iterator_curr) {
+            itr_ptr->data_ptr = itr_ptr->iterator_curr->data;
+            itr_ptr->size = itr_ptr->iterator_curr->size;
+        }
+        else {
+            itr_ptr->data_ptr = NULL;
+            itr_ptr->size = 0;
+        }
+        return (itr_ptr->iterator_curr) ? (XOR_LL_STATUS_SUCCESS) : 
+            (XOR_LL_STATUS_EOL);
+    }
+
     itr_ptr->forward_dir = __XOR_LL_FALSE;
     //get the next pointer
     if (NULL == itr_ptr->iterator_curr) {
@@ -231,6 +266,8 @@ xor_ll_reset_iterator (
     itr_ptr->size           = 0;
     itr_ptr->iterator_curr  = NULL;
     itr_ptr->iterator_prev  = NULL;
+    itr_ptr->forward_dir    = __XOR_LL_TRUE;
+    itr_ptr->just_deleted   = __XOR_LL_FALSE;
 }
 
 /**
@@ -239,65 +276,107 @@ xor_ll_reset_iterator (
  * @param ll_ptr    Pointer to the XOR linked list object
  * @param iter_ptr  Pointer to the iterator describing the position
  * @return int      XOR_LL_STATUS_SUCCESS removal successful
+ *                  XOR_LL_STATUS_EMPTY_LIST list is empty
  */
 int
 xor_ll_remove_node_iter (
     XOR_LL *ll_ptr,
     XOR_LL_ITERATOR *iter_ptr)
 {
-    struct _xor_ll_node *del_ptr = NULL;
+    struct _xor_ll_node *del_ptr = iter_ptr->iterator_curr;
+
+    /* NOTE:    The terms prev and next in this function are based on the 
+                assumption that we are traversing forward */
 
     //case 0: list is empty
-    if (ll_ptr->head == NULL) {
-        assert (ll_ptr->tail == NULL);
+    if (!ll_ptr->head && !ll_ptr->tail) {
+
         assert (iter_ptr->iterator_curr == NULL);
         assert (iter_ptr->iterator_prev == NULL);
-
         return XOR_LL_STATUS_EMPTY_LIST;
     }
 
-    //case 1: list has only one node
-    if(iter_ptr->iterator_curr == ll_ptr->head && ll_ptr->head == ll_ptr->tail){
-        assert (iter_ptr->iterator_prev == NULL);
-        del_ptr = iter_ptr->iterator_curr;
+    //case 1: list has only one node, and that is to be removed
+    else if ((ll_ptr->head == ll_ptr->tail) && 
+            (iter_ptr->iterator_curr == ll_ptr->head)) {
 
-        iter_ptr->iterator_curr = NULL;
+        assert (iter_ptr->iterator_prev == NULL);
+        //remove that node, and update tail, head, and iterator to NULL
         ll_ptr->head = NULL;
         ll_ptr->tail = NULL;
+        iter_ptr->iterator_curr = NULL;
     }
 
-    //case 2: node is head, update head
+    //case 2: list has multiple nodes, node to be removed is head
     else if (iter_ptr->iterator_curr == ll_ptr->head) {
-        // struct _xor_ll_node *next = _xor_ll_get_next_node (NULL, 
-        //                                     iter_ptr->iterator_curr->xor_ptr);
 
-    }
-
-    //case 3: node is tail, update tail
-    else if (iter_ptr->iterator_prev == ll_ptr->tail) {
-
-    }
-
-    //case 4: node is some in between
-    else {
+        //find the next and next->next addresses
         struct _xor_ll_node *next = _xor_ll_get_next_node (NULL, 
-                                            iter_ptr->iterator_curr->xor_ptr);
-
-        //update previous's link: from prev->prev to next
-        //prev->xor_ptr = &(prev->prev) XOR &(next)
-        struct _xor_ll_node *prev_prev = _xor_ll_get_next_node (
-                                        iter_ptr->iterator_prev, 
-                                            iter_ptr->iterator_prev->xor_ptr);
-        iter_ptr->iterator_prev->xor_ptr = (uintptr_t)(prev_prev) ^ 
-                                                (uintptr_t)(next);
-
-        //update next's link (opp. direction): from next->next to prev
-        //next->xor_ptr = &(next->next) XOR &(prev)
-        struct _xor_ll_node *next_next = _xor_ll_get_next_node (next, 
+                                        iter_ptr->iterator_curr->xor_ptr);
+        struct _xor_ll_node *next_next = _xor_ll_get_next_node (ll_ptr->head, 
                                             next->xor_ptr);
-        next->xor_ptr = (uintptr_t)(next_next) ^ 
-                            (uintptr_t)(iter_ptr->iterator_prev);
-        
+
+        //update link of next. link from NULL to next->next
+        //next->xor_ptr = (NULL) XOR &(next->next)
+        next->xor_ptr = __XOR_LL_COMPUTE_LINK(NULL,next_next);
+
+        //update the head pointer and the iterator
+        ll_ptr->head = next;
+        if (__XOR_LL_TRUE == iter_ptr->forward_dir) {
+            iter_ptr->iterator_curr = next;
+        }
+        else {
+            iter_ptr->iterator_curr = NULL;
+        }
+    }
+
+    //case 3: list has multiple nodes, node to be removed is tail
+    else if (iter_ptr->iterator_curr == ll_ptr->tail) {
+
+        //find the prev and prev->prev addresses
+        struct _xor_ll_node *prev = _xor_ll_get_next_node (NULL, 
+                                        iter_ptr->iterator_curr->xor_ptr);
+        struct _xor_ll_node *prev_prev = _xor_ll_get_next_node (ll_ptr->tail, 
+                                            prev->xor_ptr);
+
+        //update link of prev. link from NULL to prev->prev
+        //prev->xor_ptr = (NULL) XOR &(prev->prev)
+        prev->xor_ptr = __XOR_LL_COMPUTE_LINK(NULL,prev_prev);
+
+        //update the tail pointer and iterator
+        ll_ptr->tail = prev;
+        if (__XOR_LL_TRUE == iter_ptr->forward_dir) {
+            iter_ptr->iterator_curr = NULL;
+        }
+        else {
+            iter_ptr->iterator_curr = prev;
+        }
+    }
+
+    //case 4: list has multiple nodes, our node is somewhere in between
+    else {
+
+        //find the next, next->next and prev, and prev->prev node addresses
+        struct _xor_ll_node *next = _xor_ll_get_next_node (
+                                        iter_ptr->iterator_prev,
+                                        iter_ptr->iterator_curr->xor_ptr);
+        struct _xor_ll_node *next_next = _xor_ll_get_next_node (
+                                        iter_ptr->iterator_curr,
+                                        next->xor_ptr);
+        struct _xor_ll_node *prev = iter_ptr->iterator_prev;
+        struct _xor_ll_node *prev_prev = _xor_ll_get_next_node (
+                                        iter_ptr->iterator_curr,
+                                        prev->xor_ptr);
+
+        //update link of prev. link from prev->prev to next
+        //prev->xor_ptr = &(prev->prev) XOR &(next)
+        prev->xor_ptr = __XOR_LL_COMPUTE_LINK(prev_prev, next);
+
+        //update link of next. link from next->next to prev
+        next->xor_ptr = __XOR_LL_COMPUTE_LINK(next_next, prev);
+
+        //update iterator (direction doesn't matter here)
+        iter_ptr->iterator_curr = next;
 
     }
 
@@ -307,6 +386,9 @@ xor_ll_remove_node_iter (
         free (del_ptr->data);
 #endif
         free (del_ptr);
+        iter_ptr->just_deleted = __XOR_LL_TRUE;
+        iter_ptr->data_ptr = NULL;
+        iter_ptr->size = 0;
     }
     return XOR_LL_STATUS_SUCCESS;
 }
@@ -375,8 +457,10 @@ xor_ll_remove_node (
                 struct _xor_ll_node *next_next = _xor_ll_get_next_node (curr, 
                                                 next->xor_ptr);
                 //set the new xor_ptr for prev and next
-                prev->xor_ptr = (uintptr_t)(prev_prev) ^ (uintptr_t)(next);
-                next->xor_ptr = (uintptr_t)(prev) ^ (uintptr_t)(next_next);
+                // prev->xor_ptr = (uintptr_t)(prev_prev) ^ (uintptr_t)(next);
+                // next->xor_ptr = (uintptr_t)(prev) ^ (uintptr_t)(next_next);
+                prev->xor_ptr = __XOR_LL_COMPUTE_LINK(prev_prev, next);
+                next->xor_ptr = __XOR_LL_COMPUTE_LINK(prev, next_next);
             }
 
 #ifndef XOR_LL_NO_ALLOC
@@ -478,5 +562,6 @@ _xor_ll_get_next_node (
     struct _xor_ll_node *prev,
     uintptr_t xor_ptr)
 {
-    return (struct _xor_ll_node*) ((uintptr_t)(prev) ^ xor_ptr);
+    // return (struct _xor_ll_node*) ((uintptr_t)(prev) ^ xor_ptr);
+    return (struct _xor_ll_node*) (__XOR_LL_COMPUTE_LINK(prev,xor_ptr));
 }

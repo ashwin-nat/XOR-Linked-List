@@ -46,9 +46,14 @@ int main (int argc, char *argv[])
         int *ptr = itr.data_ptr;
         printf ("%d  ", *ptr);
         fflush(stdout);
+
+        if (*ptr == 10) {
+            xor_ll_remove_node_iter (&my_ll, &itr);
+        }
     }
 
-    xor_ll_remove_node (&my_ll, &y, sizeof(z), comparator);
+    int cat = 55;
+    xor_ll_remove_node (&my_ll, &cat, sizeof(z), comparator);
 
     printf ("\nReverse: ");
     XOR_LL_LOOP_REV_RST(&my_ll,&itr) {
