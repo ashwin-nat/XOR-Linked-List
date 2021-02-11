@@ -1,6 +1,13 @@
 # XOR-Linked-List
-This library can be used to stored data of any type in an XOR linked list.
-The user can also traverse the list in forward and reverse directions.
+If you wanna use an unnecessarily complex/obtuse data structure for your project,
+XOR-Linked-List might be what you want.
+
+## Who even would use this (or a similar) library?
+
+* Alphas and you want to show the betas that their doubly linked list uses less memory
+* Geniuses who want to demonstrate their superior understanding of bitwise arithmetic
+* Masochists
+* People working on embedded platforms who really have tight memory constraints and need the performance of doubly linked lists
 
 ## What is an XOR-Linked list?
 A normal (single) linked list maintains one pointer in every node of the list.
@@ -62,3 +69,7 @@ So while traversing, all we need to do is perform
 Just include the xor-ll.c in your sources directory and xor-ll.h in your includes
 directory.
 Use GNU make to build the same application.
+```
+make
+./xor-ll
+```
