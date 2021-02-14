@@ -20,32 +20,32 @@
 #define XOR_LL_STATUS_BAD_DATA          -3
 #define XOR_LL_STATUS_EOL               -4
 #define XOR_LL_STATUS_NOT_FOUND         -5
+#define XOR_LL_STATUS_EMPTY_LIST        -6
 
 #define XOR_LL_INITIALISER              {   .head = NULL, \
                                             .tail = NULL,}
-#define XOR_LL_ITERATOR_INITIALISER     {   .data_ptr = NULL, .size = 0, \
+#define XOR_LL_ITERATOR_INITIALISER     {   .node_data.ptr = NULL, \
+                                            .node_data.size = 0, \
                                             .iterator_prev = NULL, \
                                             .iterator_curr = NULL, \
-                                            .forward_dir = 0,}
+                                            .htt_dir = 1, \
+                                            .just_deleted = 0,}
 
-#define XOR_LL_DONT_ALLOC               0
-#define XOR_LL_ALLOC_COPY_ONTO_HEAP     1
-
-#define XOR_LL_LOOP_FWD(ll_ptr,ll_itr_ptr) \
+#define XOR_LL_LOOP_HTT(ll_ptr,ll_itr_ptr) \
                             while(XOR_LL_STATUS_EOL != \
-                            xor_ll_iterate_fwd((ll_ptr),(ll_itr_ptr)))
-#define XOR_LL_LOOP_FWD_RST(ll_ptr,ll_itr_ptr) \
+                            xor_ll_iterate_htt((ll_ptr),(ll_itr_ptr)))
+#define XOR_LL_LOOP_HTT_RST(ll_ptr,ll_itr_ptr) \
                             xor_ll_reset_iterator((ll_itr_ptr)); \
                             while(XOR_LL_STATUS_EOL != \
-                            xor_ll_iterate_fwd((ll_ptr),(ll_itr_ptr)))
+                            xor_ll_iterate_htt((ll_ptr),(ll_itr_ptr)))
 
-#define XOR_LL_LOOP_REV(ll_ptr,ll_itr_ptr) \
+#define XOR_LL_LOOP_TTH(ll_ptr,ll_itr_ptr) \
                             while(XOR_LL_STATUS_EOL != \
-                            xor_ll_iterate_rev((ll_ptr),(ll_itr_ptr)))
-#define XOR_LL_LOOP_REV_RST(ll_ptr,ll_itr_ptr) \
+                            xor_ll_iterate_tth((ll_ptr),(ll_itr_ptr)))
+#define XOR_LL_LOOP_TTH_RST(ll_ptr,ll_itr_ptr) \
                             xor_ll_reset_iterator((ll_itr_ptr)); \
                             while(XOR_LL_STATUS_EOL != \
-                            xor_ll_iterate_rev((ll_ptr),(ll_itr_ptr)))
+                            xor_ll_iterate_tth((ll_ptr),(ll_itr_ptr)))
 /******************************************************************************/
 /* Strucure definitions */
 /**
@@ -62,14 +62,21 @@ typedef struct _xor_ll {
     struct _xor_ll_node *tail;
 }XOR_LL;
 
-typedef struct _xor_ll_iterator {
-    void *data_ptr;
+typedef struct _xor_ll_node_data {
+    void *ptr;
     size_t size;
+}XOR_LL_NODE_DATA;
+
+typedef struct _xor_ll_iterator {
+    // void *data_ptr;
+    // size_t size;
+    XOR_LL_NODE_DATA node_data;
 
     struct _xor_ll_node *iterator_prev;
     struct _xor_ll_node *iterator_curr;
 
-    uint8_t forward_dir;
+    uint8_t htt_dir;
+    uint8_t just_deleted;
 }XOR_LL_ITERATOR;
 
 /******************************************************************************/
@@ -84,23 +91,39 @@ xor_ll_init (
     XOR_LL *ll_ptr);
 
 /**
- * @brief           Insert the specified data into the XOR linked list
+ * @brief           Push the specified data into the XOR linked list from the 
+ *                  tail side
  * @param ll_ptr    Pointer to the XOR Linked list object
  * @param data      Const pointer to the data
  * @param size      Size of the data
  * @return int      XOR_LL_STATUS_SUCCESS - insertion successful
  *                  XOR_LL_STATUS_FAILURE_ALLOC - allocation failure (
  *                      if copy_mode is XOR_LL_ALLOC_COPY_ONTO_HEAP)
- *                  XOR_LL_STATUS_BAD_DATA - data is NULL or size is 0
  */
 int
-xor_ll_insert (
+xor_ll_push_tail (
     XOR_LL *ll_ptr, 
     const void *data, 
     size_t size);
 
 /**
- * @brief           Iterates over the given XOR Linked list in the forward 
+ * @brief           Push the specified data into the XOR linked list from the 
+ *                  head side
+ * @param ll_ptr    Pointer to the XOR Linked list object
+ * @param data      Const pointer to the data
+ * @param size      Size of the data
+ * @return int      XOR_LL_STATUS_SUCCESS - insertion successful
+ *                  XOR_LL_STATUS_FAILURE_ALLOC - allocation failure (
+ *                      if copy_mode is XOR_LL_ALLOC_COPY_ONTO_HEAP)
+ */
+int
+xor_ll_push_head (
+    XOR_LL *ll_ptr, 
+    const void *data, 
+    size_t size);
+
+/**
+ * @brief           Iterates over the given XOR Linked list in the head to tail 
  *                      direction, sets data_ptr to point to the required data, 
  *                      and fills the memory pointed to size_ptr (if not NULL) 
  *                      with the data size
@@ -111,12 +134,12 @@ xor_ll_insert (
  *                  XOR_LL_STATUS_EOL - the end of the list is reached
  */
 int
-xor_ll_iterate_fwd (
+xor_ll_iterate_htt (
     XOR_LL *ll_ptr,
     XOR_LL_ITERATOR *itr_ptr);
 
 /**
- * @brief           Iterates over the given XOR Linked list in the reverse 
+ * @brief           Iterates over the given XOR Linked list in the tail to head 
  *                      direction, sets data_ptr to point to the required data, 
  *                      and fills the memory pointed to size_ptr (if not NULL) 
  *                      with the data size
@@ -127,7 +150,7 @@ xor_ll_iterate_fwd (
  *                  XOR_LL_STATUS_EOL - the end of the list is reached
  */
 int
-xor_ll_iterate_rev (
+xor_ll_iterate_tth (
     XOR_LL *ll_ptr,
     XOR_LL_ITERATOR *itr_ptr);
 
@@ -140,22 +163,43 @@ xor_ll_reset_iterator (
     XOR_LL_ITERATOR *itr_ptr);
 
 /**
- * @brief           Search for the given search key in the given linked list and
- *                      remove it
- * @param ll_ptr    Pointer to the XOR Linked List object
- * @param key       Const void pointer to the search key data
- * @param size      Size of the search key
- * @param cmp       Comparator function that returns 0 when the search key is 
- *                      found, and non-zero otherwise
- * @return int      XOR_LL_STATUS_SUCCESS removal successful
- *                  XOR_LL_STATUS_NOT_FOUND key not found
+ * @brief           Remove the node specified by the iterator from the linked 
+ *                  list
+ * @param ll_ptr    Pointer to the XOR linked list object
+ * @param iter_ptr  Pointer to the iterator describing the position
+ * @return int      XOR_LL_STATUS_SUCCESS - removal successful
+ *                  XOR_LL_STATUS_EMPTY_LIST - empty list
  */
 int
-xor_ll_remove_node (
+xor_ll_remove_node_iter (
     XOR_LL *ll_ptr,
-    const void *key,
-    size_t size,
-    int (*cmp) (const void *a, size_t a_sz, const void *b, size_t b_sz));
+    XOR_LL_ITERATOR *iter_ptr);
+
+/**
+ * @brief           Pop the head node from the XOR linked list
+ * @param ll_ptr    Pointer to the XOR Linked list object
+ * @param data      (Optional) Pointer to the node data object (set to NULL if 
+ *                  not interested in the data)
+ * @return int      XOR_LL_STATUS_SUCCESS - pop successful
+ *                  XOR_LL_STATUS_EMPTY_LIST - empty list
+ */
+int
+xor_ll_pop_head (
+    XOR_LL *ll_ptr,
+    XOR_LL_NODE_DATA *data);
+
+/**
+ * @brief           Pop the tail node from the XOR linked list
+ * @param ll_ptr    Pointer to the XOR Linked list object
+ * @param data      (Optional) Pointer to the node data object (set to NULL if 
+ *                  not interested in the data)
+ * @return int      XOR_LL_STATUS_SUCCESS - pop successful
+ *                  XOR_LL_STATUS_EMPTY_LIST - empty list
+ */
+int
+xor_ll_pop_tail (
+    XOR_LL *ll_ptr,
+    XOR_LL_NODE_DATA *data);
 
 /**
  * @brief           Destroy this XOR Linked list
