@@ -10,8 +10,8 @@
 #define __XOR_LL_NULL_PTR           (uintptr_t)(NULL)
 
 //evaluates to 1 if valid, 0 if invalid
-#define __XOR_LL_CP_MODE_VALID(x)   ((XOR_LL_DONT_ALLOC==(x)) || \
-                                     (XOR_LL_ALLOC_COPY_ONTO_HEAP==(x)))
+#define __XOR_LL_INS_MODE_VALID(x)  ((XOR_LL_INSERTION_BEFORE_ITER==(x)) || \
+                                     (XOR_LL_INSERTION_AFTER_ITER==(x)))
 #define __XOR_LL_COMPUTE_LINK(a,b)  (((uintptr_t)(a)) ^ ((uintptr_t)(b)))
 /******************************************************************************/
 /* Internal structure definitions */
@@ -87,8 +87,7 @@ xor_ll_init (
  * @param data      Const pointer to the data
  * @param size      Size of the data
  * @return int      XOR_LL_STATUS_SUCCESS - insertion successful
- *                  XOR_LL_STATUS_FAILURE_ALLOC - allocation failure (
- *                      if copy_mode is XOR_LL_ALLOC_COPY_ONTO_HEAP)
+ *                  XOR_LL_STATUS_FAILURE_ALLOC - allocation failure
  */
 int
 xor_ll_push_tail (
@@ -133,8 +132,7 @@ xor_ll_push_tail (
  * @param data      Const pointer to the data
  * @param size      Size of the data
  * @return int      XOR_LL_STATUS_SUCCESS - insertion successful
- *                  XOR_LL_STATUS_FAILURE_ALLOC - allocation failure (
- *                      if copy_mode is XOR_LL_ALLOC_COPY_ONTO_HEAP)
+ *                  XOR_LL_STATUS_FAILURE_ALLOC - allocation failure
  */
 int
 xor_ll_push_head (
@@ -169,6 +167,155 @@ xor_ll_push_head (
         //3. update the head pointer
         ll_ptr->head = node;
     }
+    return XOR_LL_STATUS_SUCCESS;
+}
+
+/**
+ * @brief           Insert the given data at the position specified by the 
+ *                  iterator
+ * @param ll_ptr    Pointer to the XOR Linked list object
+ * @param itr_ptr   Pointer to the iterator object
+ * @param data      Pointer to the data
+ * @param size      Size of the data
+ * @param position  XOR_LL_INSERTION_BEFORE_ITER - insert before iterator
+ *                  XOR_LL_INSERTION_AFTER_ITER  - insert after iterator
+ * @return int      XOR_LL_STATUS_SUCCESS - insertion successful
+ *                  XOR_LL_STATUS_FAILURE_ALLOC - allocation failure
+ */
+int
+xor_ll_insert_iter (
+    XOR_LL *ll_ptr,
+    XOR_LL_ITERATOR *itr_ptr,
+    const void *data,
+    size_t size,
+    uint8_t position)
+{
+    assert (ll_ptr);
+    assert (itr_ptr);
+
+    //0. validate options
+    if (!__XOR_LL_INS_MODE_VALID(position)) {
+        return XOR_LL_STATUS_BAD_OPTIONS;
+    }
+
+    //1. create the node
+    struct _xor_ll_node *new_node = _xor_ll_create_node (data, size);
+    if (NULL == new_node) { return XOR_LL_STATUS_FAILURE_ALLOC; }
+
+    //2. if list empty
+    if (NULL == ll_ptr->head) {
+        assert (NULL == ll_ptr->tail);
+        assert (NULL == itr_ptr->iterator_curr);
+        assert (NULL == itr_ptr->iterator_prev);
+
+        ll_ptr->head = new_node;
+        ll_ptr->tail = new_node;
+        itr_ptr->iterator_curr = new_node;
+        return XOR_LL_STATUS_SUCCESS;
+    }
+
+    //these variables are redundant, but are made to improve readability
+    //the compiler will probably optimise them away anyways
+    struct _xor_ll_node *prev = itr_ptr->iterator_prev;
+    struct _xor_ll_node *curr = itr_ptr->iterator_curr;
+    struct _xor_ll_node *next = _xor_ll_get_next_node (
+                                        prev, curr->xor_ptr);
+
+    //3. the "fun" part [NOTE: eol is end of list, sol is start of list]
+    if (XOR_LL_INSERTION_BEFORE_ITER == position) {
+        /* Insert between prev and curr */
+        const uint8_t is_sol = (NULL == prev) ? (__XOR_LL_TRUE) : 
+                                (__XOR_LL_FALSE);
+
+        if (__XOR_LL_TRUE == is_sol) {
+            //1. compute link for new node. from NULL to curr
+            new_node->xor_ptr = __XOR_LL_COMPUTE_LINK(NULL,curr);
+
+            //2. update head's/tail's/prev's link. link from new node to next
+            curr->xor_ptr = __XOR_LL_COMPUTE_LINK(new_node,next);
+
+            //3. need to update extremum node
+            if (curr == ll_ptr->head) {
+                assert (__XOR_LL_TRUE == itr_ptr->htt_dir);
+
+                //insert before head and set that as new head
+                //update head pointer to new node
+                ll_ptr->head = new_node;
+            }
+            else {
+                assert (curr == ll_ptr->tail);
+                assert (__XOR_LL_FALSE == itr_ptr->htt_dir);
+
+                //insert before tail and set that as new head
+                //update tail pointer to new node
+                ll_ptr->tail = new_node;
+            }
+
+            //4. update iterator's previous node to new node
+            itr_ptr->iterator_prev = new_node;
+        }
+        else {
+            //0. compute address of prev->prev
+            struct _xor_ll_node *prev_prev = _xor_ll_get_next_node (
+                                                curr, prev->xor_ptr);
+            //1. compute link for new node. link from prev to curr
+            new_node->xor_ptr = __XOR_LL_COMPUTE_LINK(prev, curr);
+
+            //2. update link of current. link from new node to next
+            curr->xor_ptr = __XOR_LL_COMPUTE_LINK(new_node,next);
+
+            //3. update link of prev. link from prev->prev to new node
+            prev->xor_ptr = __XOR_LL_COMPUTE_LINK(prev_prev,new_node);
+
+            //4. update iterator's prev to new node
+            itr_ptr->iterator_prev = new_node;
+        }
+    }
+    else {
+        /* Insert between curr and next */
+        const uint8_t is_eol = (NULL == next) ? (__XOR_LL_TRUE) : 
+                                (__XOR_LL_FALSE);
+
+        if (__XOR_LL_TRUE == is_eol) {
+            //1. compute link for new node. from curr to NULL
+            new_node->xor_ptr = __XOR_LL_COMPUTE_LINK(curr,NULL);
+
+            //2. update head's/tail's/curr's link. link from prev to new node
+            curr->xor_ptr = __XOR_LL_COMPUTE_LINK(prev,new_node);
+
+            //3. update extremum node
+            if (curr == ll_ptr->tail) {
+                assert (__XOR_LL_TRUE == itr_ptr->htt_dir);
+
+                //insert after tail, and set that as new tail
+                ll_ptr->tail = new_node;
+            }
+            else {
+                assert (curr == ll_ptr->head);
+                assert (__XOR_LL_FALSE == itr_ptr->htt_dir);
+
+                //insert after head (since TTH dir), and set that as new head
+                ll_ptr->head = new_node;
+            }
+
+            //no need to update iterator's previous, since we're updating after
+        }
+        else {
+            //0. compute address of next->next
+            struct _xor_ll_node *next_next = _xor_ll_get_next_node (curr, 
+                                                    next->xor_ptr);
+
+            //1. compute link for new node. link from curr to next
+            new_node->xor_ptr = __XOR_LL_COMPUTE_LINK(curr,next);
+
+            //2. update link of current. link from prev to new node
+            curr->xor_ptr = __XOR_LL_COMPUTE_LINK(prev,new_node);
+
+            //3. update link of next. link from new node to next->next
+            next->xor_ptr = __XOR_LL_COMPUTE_LINK(new_node,next_next);
+        }
+    }
+
     return XOR_LL_STATUS_SUCCESS;
 }
 

@@ -1,5 +1,5 @@
 # XOR-Linked-List
-If you wanna use an unnecessarily complex/obtuse data structure for your project,
+If you want to use an unnecessarily complex/obtuse data structure for your project,
 XOR-Linked-List might be what you want.
 
 ## Who even would use this (or a similar) library?
@@ -7,7 +7,10 @@ XOR-Linked-List might be what you want.
 * Alphas who want to show the betas that their doubly linked lists use less memory
 * Geniuses who want to demonstrate their superior understanding of bitwise arithmetic
 * Masochists
-* People working on embedded platforms who really have tight memory constraints and need the performance of doubly linked lists
+* People working on embedded platforms who really have tight memory constraints and need the 
+traversibility of doubly linked lists, but at the cost of a single pointer per node
+* (This one is just me thinking out loud) Game developers who want to obfuscate their data structures to 
+protect against cheat software
 
 ## What is an XOR-Linked list?
 A normal (single) linked list maintains one pointer in every node of the list.
@@ -18,8 +21,8 @@ traverse this list in the reverse order (since one can't know the previous path)
 |  Data     |       |  Data     |       |  Data    |
 |           |       |           |       |          |
 +-----------+       +-----------+       +----------+
-|  Next ptr |       |  Next Ptr |       |  Next ptr|
-|           +------->           +------>+          |
+|  Next ptr |       |  Next ptr |       |  Next ptr|
+|           |------>|           |------>|          |
 +-----------+       +-----------+       +----------+
 ```
 
@@ -32,9 +35,9 @@ will maintain two pointers.
 |   Data        |        |    Data        |       |     Data       |
 |               |        |                |       |                |
 +-------+-------+        +--------+-------+       +-------+--------+
-| prev  | next  +--------> prev   | next  +------>+ prev  | next   |
+| prev  | next  |------->| prev   | next  |------>| prev  | next   |
 |       |       |        |        |       |       |       |        |
-|       |       <--------+        |       <-------+       |        |
+|       |       |<-------|        |       |<------|       |        |
 +-------+-------+        +--------+-------+       +-------+--------+
 
 ```
@@ -62,6 +65,17 @@ So at every node, we will store the XOR of the previous and current node.
 So while traversing, all we need to do is perform
 ```
     next = &(PREV) XOR (CURR->xor_ptr)
+```
+
+So now we have this
+```
++-----------+       +-----------+       +----------+
+|  Data     |       |  Data     |       |  Data    |
+|           |       |           |       |          |
++-----------+       +-----------+       +----------+
+|  XOR ptr  |       |  XOR ptr  |       |  XOR ptr |
+|           |<----->|           |<----->|          |
++-----------+       +-----------+       +----------+
 ```
 
 ## Running the example:
@@ -131,3 +145,21 @@ xor_ll_remove_node_iter() function (refer to example.c)
 ### Destruction
 Once done with the linked list, don't forget to destroy it before it goes out of
 scope. This can be done using the xor_ll_destroy() function.
+
+## Memory Leaks, what about those??
+I have tested the example program with valgrind, and have added the valgrind report to 
+the repo now. The report was obtained using the below command 
+([which I got from here](https://stackoverflow.com/questions/5134891/how-do-i-use-valgrind-to-find-memory-leaks))
+I will continue to add more data to the example file to cover various cases.
+```
+valgrind --leak-check=full \
+         --show-leak-kinds=all \
+         --track-origins=yes \
+         --verbose \
+         --log-file=valgrind-report.txt \
+         ./xor-ll
+```
+
+## Credits
+* [Wikipedia for the logic](https://en.wikipedia.org/wiki/XOR_linked_list)
+* [ASCIIFlow for the block diagrams](http://asciiflow.com/)
