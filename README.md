@@ -1,6 +1,8 @@
 # XOR-Linked-List
 If you want to use an unnecessarily complex/obtuse data structure for your project,
 XOR-Linked-List might be what you want.
+This library can be used to store data of any type (treats everything as a void 
+pointer).
 
 ## Who even would use this (or a similar) library?
 
