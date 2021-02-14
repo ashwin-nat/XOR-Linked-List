@@ -16,8 +16,6 @@ int comparator (const void *a, size_t a_sz, const void *b, size_t b_sz)
 
 int main (int argc, char *argv[])
 {
-    printf ("Hello world\n");
-
     int y=2, z=3;
     int *x = malloc (sizeof(*x));
     int a=10, b=20, c=30;
@@ -40,16 +38,36 @@ int main (int argc, char *argv[])
     xor_ll_destroy (&xor_ll);
 #endif
 
+    int cat1 = 45, cat2=46;
     XOR_LL_ITERATOR itr = XOR_LL_ITERATOR_INITIALISER;
-    printf ("Forward: ");
+    printf ("Forward (no changes): ");
+    XOR_LL_LOOP_HTT_RST(&my_ll,&itr) {
+        int *ptr = itr.node_data.ptr;
+        printf ("%d  ", *ptr);
+    }
+
+    printf ("\nForward: ");
     XOR_LL_LOOP_HTT_RST(&my_ll,&itr) {
         int *ptr = itr.node_data.ptr;
         printf ("%d  ", *ptr);
         fflush(stdout);
 
-        if (*ptr == 10) {
-            xor_ll_remove_node_iter (&my_ll, &itr);
+        if (*ptr == 3) {
+            // xor_ll_remove_node_iter (&my_ll, &itr);
+            xor_ll_insert_iter (&my_ll, &itr, &cat1, sizeof(cat1), 
+                XOR_LL_INSERTION_BEFORE_ITER);
         }
+
+        if (*ptr == 2) {
+            xor_ll_insert_iter (&my_ll, &itr, &cat2, sizeof(cat2), 
+                XOR_LL_INSERTION_AFTER_ITER);
+        }
+    }
+
+    printf ("\nForward (after changes): ");
+    XOR_LL_LOOP_HTT_RST(&my_ll,&itr) {
+        int *ptr = itr.node_data.ptr;
+        printf ("%d  ", *ptr);
     }
 
     printf ("\nReverse: ");

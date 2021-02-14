@@ -14,16 +14,29 @@
 
 /******************************************************************************/
 /* Macro definitions */
+//Status codes
 #define XOR_LL_STATUS_SUCCESS            0
 #define XOR_LL_STATUS_FAILURE_GEN       -1
 #define XOR_LL_STATUS_FAILURE_ALLOC     -2
-#define XOR_LL_STATUS_BAD_DATA          -3
+#define XOR_LL_STATUS_BAD_OPTIONS       -3
 #define XOR_LL_STATUS_EOL               -4
 #define XOR_LL_STATUS_NOT_FOUND         -5
 #define XOR_LL_STATUS_EMPTY_LIST        -6
 
+//options
+#define XOR_LL_INSERTION_BEFORE_ITER    0
+#define XOR_LL_INSERTION_AFTER_ITER     1
+//convenience macros
+/**
+ * @brief   Assign this to your stack allocated XOR_LL object to initialise it
+ * 
+ */
 #define XOR_LL_INITIALISER              {   .head = NULL, \
                                             .tail = NULL,}
+/**
+ * @brief   Assign this to your stack allocated XOR_LL_ITERATOR to init it
+ * 
+ */
 #define XOR_LL_ITERATOR_INITIALISER     {   .node_data.ptr = NULL, \
                                             .node_data.size = 0, \
                                             .iterator_prev = NULL, \
@@ -31,17 +44,37 @@
                                             .htt_dir = 1, \
                                             .just_deleted = 0,}
 
+/**
+ * @brief   Convenience macro for traversing the Loop in Head to Tail direction
+ *          Does NOT initialise/reset the iterator
+ * 
+ */
 #define XOR_LL_LOOP_HTT(ll_ptr,ll_itr_ptr) \
                             while(XOR_LL_STATUS_EOL != \
                             xor_ll_iterate_htt((ll_ptr),(ll_itr_ptr)))
+/**
+ * @brief   Convenience macro for traversing the Loop in Head to Tail direction
+ *          Also resets/initilises the iterator at the start of the loop
+ * 
+ */
 #define XOR_LL_LOOP_HTT_RST(ll_ptr,ll_itr_ptr) \
                             xor_ll_reset_iterator((ll_itr_ptr)); \
                             while(XOR_LL_STATUS_EOL != \
                             xor_ll_iterate_htt((ll_ptr),(ll_itr_ptr)))
 
+/**
+ * @brief   Convenience macro for traversing the Loop in Tail to Head direction
+ *          Does NOT initialise/reset the iterator
+ * 
+ */
 #define XOR_LL_LOOP_TTH(ll_ptr,ll_itr_ptr) \
                             while(XOR_LL_STATUS_EOL != \
                             xor_ll_iterate_tth((ll_ptr),(ll_itr_ptr)))
+/**
+ * @brief   Convenience macro for traversing the Loop in Tail to Head direction
+ *          Also resets/initilises the iterator at the start of the loop
+ * 
+ */
 #define XOR_LL_LOOP_TTH_RST(ll_ptr,ll_itr_ptr) \
                             xor_ll_reset_iterator((ll_itr_ptr)); \
                             while(XOR_LL_STATUS_EOL != \
@@ -62,14 +95,20 @@ typedef struct _xor_ll {
     struct _xor_ll_node *tail;
 }XOR_LL;
 
+/**
+ * @brief           The structure for returning the data and size to the caller
+ * 
+ */
 typedef struct _xor_ll_node_data {
     void *ptr;
     size_t size;
 }XOR_LL_NODE_DATA;
 
+/**
+ * @brief           The structure for maintaining list traversal state data
+ * 
+ */
 typedef struct _xor_ll_iterator {
-    // void *data_ptr;
-    // size_t size;
     XOR_LL_NODE_DATA node_data;
 
     struct _xor_ll_node *iterator_prev;
@@ -97,8 +136,7 @@ xor_ll_init (
  * @param data      Const pointer to the data
  * @param size      Size of the data
  * @return int      XOR_LL_STATUS_SUCCESS - insertion successful
- *                  XOR_LL_STATUS_FAILURE_ALLOC - allocation failure (
- *                      if copy_mode is XOR_LL_ALLOC_COPY_ONTO_HEAP)
+ *                  XOR_LL_STATUS_FAILURE_ALLOC - allocation failure
  */
 int
 xor_ll_push_tail (
@@ -113,14 +151,33 @@ xor_ll_push_tail (
  * @param data      Const pointer to the data
  * @param size      Size of the data
  * @return int      XOR_LL_STATUS_SUCCESS - insertion successful
- *                  XOR_LL_STATUS_FAILURE_ALLOC - allocation failure (
- *                      if copy_mode is XOR_LL_ALLOC_COPY_ONTO_HEAP)
+ *                  XOR_LL_STATUS_FAILURE_ALLOC - allocation failure 
  */
 int
 xor_ll_push_head (
     XOR_LL *ll_ptr, 
     const void *data, 
     size_t size);
+
+/**
+ * @brief           Insert the given data at the position specified by the 
+ *                  iterator
+ * @param ll_ptr    Pointer to the XOR Linked list object
+ * @param itr_ptr   Pointer to the iterator object
+ * @param data      Pointer to the data
+ * @param size      Size of the data
+ * @param position  XOR_LL_INSERTION_BEFORE_ITER - insert before iterator
+ *                  XOR_LL_INSERTION_AFTER_ITER  - insert after iterator
+ * @return int      XOR_LL_STATUS_SUCCESS - insertion successful
+ *                  XOR_LL_STATUS_FAILURE_ALLOC - allocation failure
+ */
+int
+xor_ll_insert_iter (
+    XOR_LL *ll_ptr,
+    XOR_LL_ITERATOR *itr_ptr,
+    const void *data,
+    size_t size,
+    uint8_t position);
 
 /**
  * @brief           Iterates over the given XOR Linked list in the head to tail 
