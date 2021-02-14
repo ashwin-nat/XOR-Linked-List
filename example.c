@@ -25,12 +25,12 @@ int main (int argc, char *argv[])
     XOR_LL my_ll = XOR_LL_INITIALISER;
     xor_ll_init (&my_ll);
 
-    xor_ll_insert (&my_ll, x, sizeof(*x));
-    xor_ll_insert (&my_ll, &y, sizeof(y));
-    xor_ll_insert (&my_ll, &z, sizeof(z));
-    xor_ll_insert (&my_ll, &a, sizeof(a));
-    xor_ll_insert (&my_ll, &b, sizeof(b));
-    xor_ll_insert (&my_ll, &c, sizeof(c));
+    xor_ll_push_tail (&my_ll, x, sizeof(*x));
+    xor_ll_push_tail (&my_ll, &y, sizeof(y));
+    xor_ll_push_tail (&my_ll, &z, sizeof(z));
+    xor_ll_push_tail (&my_ll, &a, sizeof(a));
+    xor_ll_push_tail (&my_ll, &b, sizeof(b));
+    xor_ll_push_head (&my_ll, &c, sizeof(c));
 #if 0
 
     XOR_LL_LOOP (&my_ll) {
@@ -42,7 +42,7 @@ int main (int argc, char *argv[])
 
     XOR_LL_ITERATOR itr = XOR_LL_ITERATOR_INITIALISER;
     printf ("Forward: ");
-    XOR_LL_LOOP_FWD_RST(&my_ll,&itr) {
+    XOR_LL_LOOP_HTT_RST(&my_ll,&itr) {
         int *ptr = itr.data_ptr;
         printf ("%d  ", *ptr);
         fflush(stdout);
@@ -56,7 +56,7 @@ int main (int argc, char *argv[])
     xor_ll_remove_node (&my_ll, &cat, sizeof(z), comparator);
 
     printf ("\nReverse: ");
-    XOR_LL_LOOP_REV_RST(&my_ll,&itr) {
+    XOR_LL_LOOP_TTH_RST(&my_ll,&itr) {
         int *ptr = itr.data_ptr;
         printf ("%d  ", *ptr);
     }
