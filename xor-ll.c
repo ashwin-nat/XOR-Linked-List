@@ -423,9 +423,6 @@ xor_ll_remove_node_iter (
 
     //cleanup section
     if (del_ptr) {
-#ifndef XOR_LL_NO_ALLOC
-        free (del_ptr->data);
-#endif
         free (del_ptr);
         iter_ptr->just_deleted = __XOR_LL_TRUE;
         iter_ptr->data_ptr = NULL;
@@ -504,11 +501,7 @@ xor_ll_remove_node (
                 next->xor_ptr = __XOR_LL_COMPUTE_LINK(prev, next_next);
             }
 
-#ifndef XOR_LL_NO_ALLOC
-            free (curr->data);
-#endif
             free (curr);
-
             return XOR_LL_STATUS_SUCCESS;
         }
 
@@ -538,10 +531,6 @@ xor_ll_destroy (
         curr = _xor_ll_get_next_node (prev, curr->xor_ptr);
         prev = temp;
 
-        //free prev and it's data
-#ifndef XOR_LL_NO_ALLOC
-        free (prev->data);
-#endif
         free (prev);
     }
 
@@ -570,23 +559,9 @@ _xor_ll_create_node (
     struct _xor_ll_node *ret = malloc (sizeof(*ret));
     if (ret) {
         //allocate memory for the data
-#ifdef XOR_LL_NO_ALLOC
-        ret->data = data;
+        ret->data = (void*)data;
         ret->size = size;
-#else
-        ret->data = malloc (size);
-        if (ret->data) {
-            //if data allocation is successful, copy the data;
-            memcpy (ret->data, data, size);
-            ret->size = size;
-            ret->xor_ptr = __XOR_LL_NULL_PTR;
-        }
-        //if data allocation failed, free the node allocation and return NULL
-        else {
-            free (ret);
-            ret = NULL;
-        }
-#endif
+        ret->xor_ptr = __XOR_LL_NULL_PTR;
     }
     return ret;
 }
