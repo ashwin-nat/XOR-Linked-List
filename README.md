@@ -60,7 +60,7 @@ then
     B XOR C = A
 ```
 
-So at every node, we will store the XOR of the previous and current node.
+So at every node, we will store the XOR of the previous and next node's addresses.
 ```
     xor_ptr = &(PREV) XOR &(NEXT)
 ```
@@ -68,6 +68,8 @@ So while traversing, all we need to do is perform
 ```
     next = &(PREV) XOR (CURR->xor_ptr)
 ```
+This logic will work for traversals in both directions (since previous and next 
+are relative terms anyway)
 
 So now we have this
 ```
