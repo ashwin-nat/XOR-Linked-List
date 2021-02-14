@@ -43,7 +43,7 @@ int main (int argc, char *argv[])
     XOR_LL_ITERATOR itr = XOR_LL_ITERATOR_INITIALISER;
     printf ("Forward: ");
     XOR_LL_LOOP_HTT_RST(&my_ll,&itr) {
-        int *ptr = itr.data_ptr;
+        int *ptr = itr.node_data.ptr;
         printf ("%d  ", *ptr);
         fflush(stdout);
 
@@ -52,12 +52,9 @@ int main (int argc, char *argv[])
         }
     }
 
-    int cat = 55;
-    xor_ll_remove_node (&my_ll, &cat, sizeof(z), comparator);
-
     printf ("\nReverse: ");
     XOR_LL_LOOP_TTH_RST(&my_ll,&itr) {
-        int *ptr = itr.data_ptr;
+        int *ptr = itr.node_data.ptr;
         printf ("%d  ", *ptr);
     }
 

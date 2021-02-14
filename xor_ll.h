@@ -24,7 +24,8 @@
 
 #define XOR_LL_INITIALISER              {   .head = NULL, \
                                             .tail = NULL,}
-#define XOR_LL_ITERATOR_INITIALISER     {   .data_ptr = NULL, .size = 0, \
+#define XOR_LL_ITERATOR_INITIALISER     {   .node_data.ptr = NULL, \
+                                            .node_data.size = 0, \
                                             .iterator_prev = NULL, \
                                             .iterator_curr = NULL, \
                                             .htt_dir = 1, \
@@ -61,9 +62,15 @@ typedef struct _xor_ll {
     struct _xor_ll_node *tail;
 }XOR_LL;
 
-typedef struct _xor_ll_iterator {
-    void *data_ptr;
+typedef struct _xor_ll_node_data {
+    void *ptr;
     size_t size;
+}XOR_LL_NODE_DATA;
+
+typedef struct _xor_ll_iterator {
+    // void *data_ptr;
+    // size_t size;
+    XOR_LL_NODE_DATA node_data;
 
     struct _xor_ll_node *iterator_prev;
     struct _xor_ll_node *iterator_curr;
@@ -167,23 +174,32 @@ int
 xor_ll_remove_node_iter (
     XOR_LL *ll_ptr,
     XOR_LL_ITERATOR *iter_ptr);
+
 /**
- * @brief           Search for the given search key in the given linked list and
- *                      remove it
- * @param ll_ptr    Pointer to the XOR Linked List object
- * @param key       Const void pointer to the search key data
- * @param size      Size of the search key
- * @param cmp       Comparator function that returns 0 when the search key is 
- *                      found, and non-zero otherwise
- * @return int      XOR_LL_STATUS_SUCCESS removal successful
- *                  XOR_LL_STATUS_NOT_FOUND key not found
+ * @brief           Pop the head node from the XOR linked list
+ * @param ll_ptr    Pointer to the XOR Linked list object
+ * @param data      (Optional) Pointer to the node data object (set to NULL if 
+ *                  not interested in the data)
+ * @return int      XOR_LL_STATUS_SUCCESS - pop successful
+ *                  XOR_LL_STATUS_EMPTY_LIST - empty list
  */
 int
-xor_ll_remove_node (
+xor_ll_pop_head (
     XOR_LL *ll_ptr,
-    const void *key,
-    size_t size,
-    int (*cmp) (const void *a, size_t a_sz, const void *b, size_t b_sz));
+    XOR_LL_NODE_DATA *data);
+
+/**
+ * @brief           Pop the tail node from the XOR linked list
+ * @param ll_ptr    Pointer to the XOR Linked list object
+ * @param data      (Optional) Pointer to the node data object (set to NULL if 
+ *                  not interested in the data)
+ * @return int      XOR_LL_STATUS_SUCCESS - pop successful
+ *                  XOR_LL_STATUS_EMPTY_LIST - empty list
+ */
+int
+xor_ll_pop_tail (
+    XOR_LL *ll_ptr,
+    XOR_LL_NODE_DATA *data);
 
 /**
  * @brief           Destroy this XOR Linked list
