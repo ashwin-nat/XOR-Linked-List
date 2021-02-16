@@ -164,6 +164,18 @@ valgrind --leak-check=full \
          ./xor-ll
 ```
 
+After 10000 insertions, there were no leaks
+
+```
+==515227== HEAP SUMMARY:
+==515227==     in use at exit: 0 bytes in 0 blocks
+==515227==   total heap usage: 100,011 allocs, 100,011 frees, 3,201,220 bytes allocated
+==515227== 
+==515227== All heap blocks were freed -- no leaks are possible
+==515227== 
+==515227== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+```
+
 ## Credits
 * [Wikipedia for the logic](https://en.wikipedia.org/wiki/XOR_linked_list)
 * [ASCIIFlow for the block diagrams](http://asciiflow.com/)

@@ -1,21 +1,19 @@
 #include "xor_ll.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <time.h>
 
-int comparator (const void *a, size_t a_sz, const void *b, size_t b_sz)
+#define ITEMS_COUNT         100000
+
+uint64_t get_val (void)
 {
-    if (a_sz == b_sz) {
-        const int *a_int = a;
-        const int *b_int = b;
-        if (*a_int == *b_int) {
-            return 0;
-        }
-    }
-    return 1;
+    return rand() % (1<<31);
 }
 
 int main (int argc, char *argv[])
 {
+    srand (time(NULL));
     int y=2, z=3;
     int *x = malloc (sizeof(*x));
     int a=10, b=20, c=30;
@@ -29,14 +27,12 @@ int main (int argc, char *argv[])
     xor_ll_push_tail (&my_ll, &a, sizeof(a));
     xor_ll_push_tail (&my_ll, &b, sizeof(b));
     xor_ll_push_head (&my_ll, &c, sizeof(c));
-#if 0
 
-    XOR_LL_LOOP (&my_ll) {
-        printf ("loop\n");
+    int i;
+    uint64_t *arr = malloc (sizeof(arr) * ITEMS_COUNT);
+    for (i=0; i<ITEMS_COUNT; ++i) {
+        arr[i] = get_val ();
     }
-
-    xor_ll_destroy (&xor_ll);
-#endif
 
     int cat1 = 45, cat2=46;
     XOR_LL_ITERATOR itr = XOR_LL_ITERATOR_INITIALISER;
@@ -49,8 +45,8 @@ int main (int argc, char *argv[])
     printf ("\nForward: ");
     XOR_LL_LOOP_HTT_RST(&my_ll,&itr) {
         int *ptr = itr.node_data.ptr;
-        printf ("%d  ", *ptr);
-        fflush(stdout);
+        // printf ("%d  ", *ptr);
+        // fflush(stdout);
 
         if (*ptr == 3) {
             // xor_ll_remove_node_iter (&my_ll, &itr);
@@ -70,14 +66,13 @@ int main (int argc, char *argv[])
         printf ("%d  ", *ptr);
     }
 
-    printf ("\nReverse: ");
-    XOR_LL_LOOP_TTH_RST(&my_ll,&itr) {
-        int *ptr = itr.node_data.ptr;
-        printf ("%d  ", *ptr);
+    for (i=0; i<ITEMS_COUNT; ++i) {
+        xor_ll_push_tail (&my_ll, &arr[i], sizeof(*arr));
     }
 
     printf ("\n");
-    free (x);
     xor_ll_destroy (&my_ll);
+    free (x);
+    free (arr);
     return 0;
 }
