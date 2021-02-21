@@ -29,7 +29,7 @@ int main (int argc, char *argv[])
     xor_ll_push_head (&my_ll, &c, sizeof(c));
 
     int i;
-    uint64_t *arr = malloc (sizeof(arr) * ITEMS_COUNT);
+    uint64_t *arr = malloc (sizeof(*arr) * ITEMS_COUNT);
     for (i=0; i<ITEMS_COUNT; ++i) {
         arr[i] = get_val ();
     }
