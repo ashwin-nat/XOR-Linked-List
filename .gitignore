@@ -53,4 +53,4 @@ dkms.conf
 
 #my executable
 xor-ll
-bitwise_xor*
+bitwise-xor
